@@ -2,8 +2,8 @@ function _wslwrap_find_winexe --argument-names cmd --description "Find Windows e
     # 1. Find from WSLWRAP_PATH (fish array)
     if set -q WSLWRAP_PATH
         for dir in $WSLWRAP_PATH
-            set -l candidate "$dir/$cmd"
-            if test -x $candidate
+            set -l candidate "$dir/$cmd.exe"
+            if test -f $candidate && test -x $candidate
                 echo $candidate
                 return 0
             end
