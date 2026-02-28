@@ -40,7 +40,7 @@ function wslwrap --description "Main entry point for wslwrap: manage registratio
         case help
             _wslwrap_help $argv
         case "*"
-            _wslwrap_echo error "unkown subcommand '$subcommand'"
+            _wslwrap_echo error "unknown subcommand '$subcommand'"
             _wslwrap_echo usage
             return 1
     end

@@ -17,7 +17,7 @@ function _wslwrap_help --description "Show usage information for wslwrap and rel
 
         _wslwrap_echo header "Symlink Management:"
         _wslwrap_echo command -n "  link        "
-        echo "Create symlinks for Windows executables in WSLWRAP_BIN_DIR.."
+        echo "Create symlinks for Windows executables in WSLWRAP_BIN_DIR."
         _wslwrap_echo command -n "  unlink      "
         echo "Remove Windows executable symlinks from WSLWRAP_BIN_DIR."
         _wslwrap_echo command -n "  links       "
