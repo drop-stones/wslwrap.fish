@@ -4,30 +4,30 @@ A lightweight Fish plugin that switches between Linux and Windows executables in
 
 ## 🔍 Overview
 
-Some commands exist both in WSL2 (Linux) and on Windows (e.g. `git`, `fd`, `rg`).  
+Some commands exist both in WSL2 (Linux) and on Windows (e.g. `git`, `fd`, `rg`).
 `wslwrap.fish` lets you register wrappers so that invoking the plain command name automatically picks the Windows `.exe` or the Linux binary depending on the current path.
 
-Auto mode rule:
+**Auto mode rule:**
 
-- Inside a Windows‑mounted path (e.g. under `/mnt/c/...`): run `command.exe`
-- Elsewhere: run the Linux `command`
+- Inside `/mnt/[a-z]/...` → run `command.exe`
+- Elsewhere → run the Linux `command`
 
 > [!IMPORTANT]
 > Assumes standard WSL2 mount points (`/mnt/[drive]/`).
-> Custom mount configurations may require manual adjustment.
 
 ## ✨ Key Features
 
-- 🔀 **Smart Context Switching**: Seamlessly chooses Windows `.exe` vs Linux binary based on the current directory
-- 🧠 **Zero Learning Curve**: Keeps muscle memory intact — no need to type `something.exe`
-- 🚀 **Fast Windows Execution**: Uses both WSL2 PATH and `where.exe` for path resolution with built-in caching to minimize lookup time
-- 🛡️ **PATH Independent**: Works even when Windows PATH isn't registered in WSL2's PATH environment
-- ⚡ **Multi-level Caching**: System-wide and PATH-aware caching strategies for optimal performance
-- 🔗 **System-wide Access**: Create symlinks for Windows executables accessible from any shell
+| Feature | Description |
+|---------|-------------|
+| **Smart Switching** | Chooses Windows `.exe` vs Linux binary based on current directory |
+| **Zero Learning Curve** | No need to type `something.exe` — keeps muscle memory intact |
+| **Fast Resolution** | Uses `WSLWRAP_PATH` and `where.exe` with built-in caching |
+| **PATH Independent** | Works even when Windows PATH isn't in WSL2's PATH |
+| **Symlink Support** | Create symlinks for system-wide access from any shell |
 
 ## 🚀 Quick Start
 
-Add registrations to your `config.fish` so they exist in every new shell:
+Add registrations to your `config.fish`:
 
 ```fish
 # ~/.config/fish/config.fish
@@ -36,162 +36,76 @@ wslwrap register rg
 wslwrap register fd --path-separator=/
 ```
 
-Open a new shell and just use `git`, `rg`, `fd` normally.
-
-## 🎯 Why wslwrap.fish?
-
-### Performance Optimization
-
-- **Smart Resolution**: Checks WSL2 PATH first, then falls back to `where.exe`
-- **Direct Execution**: Bypasses repeated PATH searches for Windows executables
-
-### Seamless Integration
-
-- **No PATH Pollution**: Your WSL2 environment stays clean — no need to manually add Windows directories
-- **Context Awareness**: Automatically detects whether you're working in a Windows or Linux context
-- **System-wide Access**: Create symlinks for access from any shell or script
+Open a new shell and use `git`, `rg`, `fd` normally.
 
 ## 🛠️ Commands
 
-### 🦑 Wrapper Management
+### Quick Reference
 
-#### ⚙️ register
+| Command | Description |
+|---------|-------------|
+| `register [--mode auto\|windows] <cmd> [args]` | Register a wrapper |
+| `unregister <cmd>...` | Remove wrappers |
+| `list` | List registered wrappers |
+| `link <cmd> [path]` | Create symlink for Windows exe |
+| `unlink <cmd>...` | Remove symlinks |
+| `links` | List symlinks |
+| `clear` | Clear all wrappers and symlinks |
+| `help [cmd]` | Show help |
 
-Register a wrapper:
+### register
+
+Register a wrapper with optional mode and default arguments:
 
 ```fish
-wslwrap register [--mode <auto|windows>] <command> [<args>...]
+wslwrap register git                       # Auto switching
+wslwrap register fd --path-separator=/     # With default options
+wslwrap register --mode windows notepad    # Force Windows
 ```
 
-##### Modes
+| Mode | Behavior |
+|------|----------|
+| `auto` (default) | Windows exe in `/mnt/c/...`, Linux binary elsewhere |
+| `windows` | Always use Windows executable |
 
-- `auto` (default) — Select Windows vs Linux based on the current path.
-- `windows` — Always invoke the Windows executable (`command.exe`).
+> [!NOTE]
+>
+> - Omit `.exe` when registering
+> - Re-registering a command updates its configuration
+> - Wrappers are not persisted; add to `~/.config/fish/config.fish` for persistence
+
+### link
+
+Create symlinks in `WSLWRAP_BIN_DIR` (default: `~/.local/share/wslwrap/bin`):
 
 ```fish
-wslwrap register git                           # Simple auto switching
-wslwrap register fd --path-separator=/         # Auto switching + default options
-wslwrap register --mode windows rg             # Force Windows everywhere
+wslwrap link node                          # Auto-detect node.exe
+wslwrap link node /mnt/c/nodejs/node.exe   # Explicit target path
 ```
 
 > [!NOTE]
 >
-> - Omit `.exe` when registering.
-> - Re-registering a command updates its configuration (mode, options).
-> - Wrappers are not persisted; keep them in `~/.config/fish/config.fish` if you want them every session.
-
-#### 🗑️ unregister
-
-Remove one or more wrappers:
-
-```fish
-wslwrap unregister git fd rg
-```
-
-> [!TIP]
-> If you want to unregister all wrappers:
->
-> ```fish
-> wslwrap list | wslwrap unregister
-> ```
-
-#### 📋 list
-
-Show registered wrapper names:
-
-```fish
-wslwrap list
-```
-
-### ⛓️ Symlink Management
-
-#### 🔗 link
-
-Create symlinks in `WSLWRAP_BIN_DIR` (default: `~/.local/share/wslwrap/bin`) for system-wide access to Windows executables:
-
-```fish
-wslwrap link <command> [<target_path>]
-```
-
-```fish
-wslwrap link git                            # Auto-detect git.exe → $WSLWRAP_BIN_DIR/git
-wslwrap link git.exe                        # Auto-detect git.exe → $WSLWRAP_BIN_DIR/git.exe
-wslwrap link git /mnt/c/Git/bin/git.exe     # Explicit target path → $WSLWRAP_BIN_DIR/git
-```
-
-> [!NOTE]
-> This plugin add `WSLWRAP_BIN_DIR` (default: `~/.local/share/wslwrap/bin`) to your `PATH` automatically.
-> If you wish to customize the directory, see [⚙️ Configuration](#%EF%B8%8F-configuration) below.
-
-#### 🔓 unlink
-
-Remove Windows executable symlinks from `WSLWRAP_BIN_DIR`:
-
-```fish
-wslwrap unlink <command> [<command> ...]
-```
-
-```fish
-wslwrap unlink node git                     # Remove multiple symlinks
-wslwrap links | wslwrap unlink              # Remove all Windows exe symlinks
-echo "node git" | wslwrap unlink            # Pipe input support
-```
-
-> [!TIP]
-> If you want to unlink all symlinks:
->
-> ```fish
-> wslwrap links | wslwrap unlink
-> ```
-
-#### 📋 links
-
-List Windows executable symlinks in `WSLWRAP_BIN_DIR`:
-
-```fish
-wslwrap links
-```
-
-### 🔧 Other Commands
-
-#### 🧹 clear
-
-Clear all registered wrappers and symlinks:
-
-```fish
-wslwrap clear
-```
-
-#### ❓ help
-
-Show general or subcommand-specific help:
-
-```fish
-wslwrap help
-wslwrap help register
-wslwrap help link
-```
+> - `WSLWRAP_BIN_DIR` is automatically added to your `PATH`
 
 ## ⚙️ Configuration
 
-### `WSLWRAP_PATH`: Search PATH for `wslwrap.fish`
+### `WSLWRAP_PATH`
 
-Customize how `wslwrap.fish` searches for Windows executables by setting `WSLWRAP_PATH` as a **fish array** (space-separated directories):
+Customize search paths for Windows executables (fish array):
 
 ```fish
-set -gx WSLWRAP_PATH /mnt/c/Windows/System32 /mnt/c/Program\ Files/OtherTool
+set -gx WSLWRAP_PATH /mnt/c/Windows/System32 /mnt/c/Program\ Files/Git/bin
 ```
 
 > [!TIP]
-> If you use `direnv` or `mise`, you can dynamically change `WSLWRAP_PATH` on a per-project basis.
-> This allows `wslwrap.fish` to resolve different Windows executables depending on your directory.
+> Use `direnv` or `mise` to dynamically change `WSLWRAP_PATH` per directory, allowing different Windows executables depending on your project.
 
-### `WSLWRAP_BIN_DIR`: Directory for Windows executable symlinks
+### `WSLWRAP_BIN_DIR`
 
-Set `WSLWRAP_BIN_DIR` to customize where Windows executable symlinks are created:
+Customize symlink directory (default: `~/.local/share/wslwrap/bin`):
 
 ```fish
-set -gx WSLWRAP_BIN_DIR ~/my/custom/wslwrap/bin
+set -gx WSLWRAP_BIN_DIR ~/my/custom/bin
 ```
 
 ## 📜 License
